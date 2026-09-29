@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Recipe Assistant</title>
+<!-- Google Fonts & Icons -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Material+Symbols+Outlined" rel="stylesheet">
+<style>
+  :root {
+    --accent: #059669;
+    --accent-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    --header-gradient: linear-gradient(135deg, #047857 0%, #059669 100%);
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --chip-bg: #f1f5f9;
+    --chip-text: #334155;
+    --input-bg: #ffffff;
+  }
+
+  [data-theme="dark"] {
+    --accent: #10b981;
+    --accent-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    --header-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --bg: #0f172a;
+    --card-bg: #1e293b;
+    --border: #334155;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --chip-bg: #334155;
+    --chip-text: #e2e8f0;
+    --input-bg: #1e293b;
+  }
+
+  * { box-sizing: border-box; transition: background-color 0.2s ease, border-color 0.2s ease; }
+  
+  body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    color: var(--text-main);
+  }
+
+  /* Header */
+  header {
+    background: var(--header-gradient);
+    color: #fff;
+    padding: 0.85rem 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .header-avatar {
+    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    backdrop-filter: blur(4px);
+  }
+
+  .header-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .header-subtitle {
+    font-size: 0.78rem;
+    opacity: 0.9;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background-color: #34d399;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 8px #34d399;
+  }
+
+  /* Theme Toggle Button */
+  .theme-toggle-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    backdrop-filter: blur(4px);
+  }
+
+  .theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Dietary Filters Bar */
+  .dietary-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.25rem;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .dietary-bar::-webkit-scrollbar { display: none; }
+  .dietary-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .diet-chip {
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .diet-chip.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+  }
+
+  /* Chat Log */
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem 1rem;
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    scroll-behavior: smooth;
+  }
+
+  /* Dialogue Rows & Bubbles */
+  .msg {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    max-width: 85%;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .msg.agent {
+    align-self: flex-start;
+  }
+
+  .msg-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+
+  .msg.user .msg-avatar {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+  }
+
+  .bubble-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .msg-author {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-left: 0.2rem;
+  }
+
+  .msg.user .msg-author {
+    text-align: right;
+    margin-right: 0.2rem;
+  }
+
+  .bubble {
+    padding: 0.85rem 1.1rem;
+    border-radius: 18px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg.agent .bubble {
+    border-top-left-radius: 4px;
+    color: var(--text-main);
+  }
+
+  .msg.user .bubble {
+    background: var(--accent-gradient);
+    color: #ffffff;
+    border: none;
+    border-top-right-radius: 4px;
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
+  }
+
+  .bubble.rich {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  /* Animated Chef Thinking Loader */
+  .thinking-loader {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .pulse-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .pulse-dots span {
+    width: 6px;
+    height: 6px;
+    background-color: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulseWave 1.4s infinite ease-in-out both;
+  }
+
+  .pulse-dots span:nth-child(1) { animation-delay: -0.32s; }
+  .pulse-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+  @keyframes pulseWave {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1.1); opacity: 1; }
+  }
+
+  /* Action & Controls Container */
+  .controls-wrapper {
+    max-width: 820px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Action Row & Prompts Row */
+  .prompts-row, .actions-row {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .prompts-row::-webkit-scrollbar, .actions-row::-webkit-scrollbar { display: none; }
+
+  .prompt-btn, .action-btn {
+    background: var(--card-bg);
+    color: var(--chip-text);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  }
+
+  .prompt-btn:hover, .action-btn:hover {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+  }
+
+  .action-btn {
+    border-color: rgba(5, 150, 105, 0.3);
+    color: var(--accent);
+  }
+
+  /* Form / Input Bar */
+  form {
+    display: flex;
+    gap: 0.6rem;
+    background: var(--input-bg);
+    padding: 0.5rem 0.6rem 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    align-items: center;
+  }
+
+  form:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px rgba(5, 150, 105, 0.15);
+  }
+
+  input {
+    flex: 1;
+    padding: 0.6rem 0;
+    border: none;
+    outline: none;
+    font-size: 0.95rem;
+    font-family: inherit;
+    background: transparent;
+    color: var(--text-main);
+  }
+
+  input::placeholder {
+    color: var(--text-muted);
+  }
+
+  button.send-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(5, 150, 105, 0.3);
+  }
+
+  button.send-btn:hover {
+    transform: scale(1.05);
+  }
+
+  /* A2UI component styles */
+  .a2card {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    background: var(--card-bg);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    max-width: 100%;
+  }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.75rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.5rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+  .a2row.between { justify-content: space-between; }
+  .a2text { margin: 0; line-height: 1.5; color: var(--text-main); }
+  .a2text.a2-h1 { font-size: 1.5rem; font-weight: 700; }
+  .a2text.a2-h2 { font-size: 1.25rem; font-weight: 700; }
+  .a2text.a2-h3 { font-size: 1.1rem; font-weight: 600; }
+  .a2text.a2-h4 { font-size: 1rem; font-weight: 600; }
+  .a2text.a2-caption { font-size: 0.85rem; color: var(--text-muted); }
+  .a2divider { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 12px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: zoom-in; }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+
+  /* Image Lightbox Modal */
+  .lightbox-modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  .lightbox-modal.active { display: flex; }
+  .lightbox-img { max-width: 90%; max-height: 90%; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-avatar">👨‍🍳</div>
+    <div>
+      <div class="header-title">Smart Recipe Assistant</div>
+      <div class="header-subtitle"><span class="status-dot"></span> Online • Vertex AI Agent</div>
+    </div>
+  </div>
+  <button id="themeToggle" class="theme-toggle-btn" title="Toggle Theme">
+    <span class="material-symbols-outlined" style="font-size: 1.1rem;">dark_mode</span>
+    <span id="themeLabel">Dark</span>
+  </button>
+</header>
+
+<!-- Dietary Filter Chips Bar -->
+<div class="dietary-bar">
+  <span class="dietary-label">Diet:</span>
+  <span class="diet-chip" data-diet="Vegetarian">🌱 Vegetarian</span>
+  <span class="diet-chip" data-diet="Gluten-Free">🌾 Gluten-Free</span>
+  <span class="diet-chip" data-diet="Low-Carb">🥑 Low-Carb</span>
+  <span class="diet-chip" data-diet="Nut Allergy">🥜 Nut-Free</span>
+</div>
+
+<div id="log"></div>
+
+<div class="controls-wrapper">
+  <!-- Quick Actions Bar -->
+  <div class="actions-row">
+    <button type="button" class="action-btn" data-action="Generate a photo of Avocado Toast with Poached Egg">📸 Dish Visual</button>
+    <button type="button" class="action-btn" data-action="Calculate nutritional breakdown for Carbonara">📊 Calculate Nutrition</button>
+    <button type="button" class="action-btn" data-action="Find nearby grocery stores in San Francisco">🛒 Nearby Groceries</button>
+    <button type="button" class="action-btn" data-action="Scale Carbonara recipe ingredients for 4 servings">⚖️ Scale Servings</button>
+  </div>
+  
+  <!-- Prompts Row -->
+  <div class="prompts-row">
+    <button type="button" class="prompt-btn" data-prompt="Find healthy dinner recipes">🥗 Healthy dinner recipes</button>
+    <button type="button" class="prompt-btn" data-prompt="Search recipes for pasta">🍝 Search pasta recipes</button>
+    <button type="button" class="prompt-btn" data-prompt="What ingredients are needed for guacamole?">🥑 Guacamole recipe</button>
+  </div>
+
+  <form id="form">
+    <input id="input" placeholder="Ask for a recipe, ingredient lookup, or dish photo…" autocomplete="off" autofocus>
+    <button type="submit" class="send-btn" title="Send message">
+      <span class="material-symbols-outlined" style="color: #ffffff; font-size: 1.2rem;">send</span>
+    </button>
+  </form>
+</div>
+
+<!-- Lightbox Modal -->
+<div id="lightbox" class="lightbox-modal">
+  <img id="lightboxImg" class="lightbox-img" src="" alt="Zoomed dish visual">
+</div>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const themeToggle = document.getElementById("themeToggle");
+const themeLabel = document.getElementById("themeLabel");
+const lightbox = document.getElementById("lightbox");
+const lightboxImg = document.getElementById("lightboxImg");
+
+// 1. Theme Toggle
+themeToggle.addEventListener("click", () => {
+  const isDark = document.body.getAttribute("data-theme") === "dark";
+  if (isDark) {
+    document.body.removeAttribute("data-theme");
+    themeLabel.textContent = "Dark";
+    themeToggle.querySelector(".material-symbols-outlined").textContent = "dark_mode";
+  } else {
+    document.body.setAttribute("data-theme", "dark");
+    themeLabel.textContent = "Light";
+    themeToggle.querySelector(".material-symbols-outlined").textContent = "light_mode";
+  }
+});
+
+// 2. Dietary Filter Toggle
+const activeDiets = new Set();
+document.querySelectorAll(".diet-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const diet = chip.getAttribute("data-diet");
+    if (activeDiets.has(diet)) {
+      activeDiets.delete(diet);
+      chip.classList.remove("active");
+    } else {
+      activeDiets.add(diet);
+      chip.classList.add("active");
+    }
+  });
+});
+
+// 3. Prompt Buttons & Quick Actions
+document.querySelectorAll(".prompt-btn, .action-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const text = btn.getAttribute("data-prompt") || btn.getAttribute("data-action");
+    input.value = text;
+    form.dispatchEvent(new Event("submit"));
+  });
+});
+
+// 4. Image Lightbox
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.classList.contains("a2img")) {
+    lightboxImg.src = e.target.src;
+    lightbox.classList.add("active");
+  }
+});
+lightbox.addEventListener("click", () => lightbox.classList.remove("active"));
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function bubble(who) {
+  const m = el("div", "msg " + who);
+  const avatar = el("div", "msg-avatar", who === "user" ? "👤" : "👨‍🍳");
+  const container = el("div", "bubble-container");
+  const author = el("div", "msg-author", who === "user" ? "You" : "Recipe Assistant");
+  const b = el("div", "bubble");
+  
+  container.appendChild(author);
+  container.appendChild(b);
+  m.appendChild(avatar);
+  m.appendChild(container);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+function showThinkingBubble() {
+  const b = bubble("agent");
+  b.innerHTML = `
+    <div class="thinking-loader">
+      <div class="pulse-dots"><span></span><span></span><span></span></div>
+      <span>Chef is preparing recipe...</span>
+    </div>
+  `;
+  return b;
+}
+
+/* ----------------------------------------------------------------------------
+ * A2UI mini-renderer (v0.8 Basic Catalog subset).
+ * -------------------------------------------------------------------------- */
+
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  return ids;
+}
+
+function iconName(n) { return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase(); }
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;
+  }
+}
+
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {
+    const referenced = new Set();
+    for (const id in comps) { const spec = comps[id]; childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c)); }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) { const node = buildNode(rid, comps, new Set()); if (node) { container.appendChild(node); drew = true; } }
+  return drew;
+}
+
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  let text = input.value.trim();
+  if (!text) return;
+
+  // Append active dietary filter context if set
+  if (activeDiets.size > 0) {
+    const dietsStr = Array.from(activeDiets).join(", ");
+    text += ` (Dietary preferences: ${dietsStr})`;
+  }
+
+  bubble("user").textContent = input.value.trim();
+  input.value = "";
+  
+  const b = showThinkingBubble();
+
+  try {
+    const res = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(b, data.parts || []);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+});
+</script>
+</body>
+</html>
